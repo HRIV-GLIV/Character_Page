@@ -405,43 +405,163 @@
         abilityModal.style.display = 'none';
     }
     };
+    // Add these functions to your existing <script> tag
+
+// Function to save character data
+function saveCharacterData() {
+    // Save stats
+    const stats = ['strength', 'agility', 'vitality', 'stamina', 'wisdom', 'intelligence', 'charisma', 'perception'];
+    stats.forEach(stat => {
+        localStorage.setItem(stat, document.getElementById(stat).textContent);
+    });
+    
+    // Save bars
+    localStorage.setItem('healthValue', document.getElementById('healthSlider').value);
+    localStorage.setItem('energyValue', document.getElementById('energySlider').value);
+    localStorage.setItem('manaValue', document.getElementById('manaSlider').value);
+    
+    // Save gold
+    localStorage.setItem('gold', document.getElementById('goldAmount').textContent);
+    
+    // Save inventory
+    const inventory = Array.from(document.getElementById('inventory').children)
+        .map(li => ({
+            name: li.querySelector('span').textContent,
+            description: li.querySelector('span').dataset.description || ''
+        }));
+    localStorage.setItem('inventory', JSON.stringify(inventory));
+    
+    // Save abilities
+    const abilities = Array.from(document.getElementById('abilities').children)
+        .map(li => ({
+            name: li.querySelector('span').textContent,
+            description: li.querySelector('span').dataset.description || ''
+        }));
+    localStorage.setItem('abilities', JSON.stringify(abilities));
+}
+
+// Function to load character data
+function loadCharacterData() {
+    // Load stats
+    const stats = ['strength', 'agility', 'vitality', 'stamina', 'wisdom', 'intelligence', 'charisma', 'perception'];
+    stats.forEach(stat => {
+        const savedValue = localStorage.getItem(stat);
+        if (savedValue) {
+            document.getElementById(stat).textContent = savedValue;
+        }
+    });
+    
+    // Load bars
+    const healthValue = localStorage.getItem('healthValue');
+    const energyValue = localStorage.getItem('energyValue');
+    const manaValue = localStorage.getItem('manaValue');
+    
+    if (healthValue) {
+        document.getElementById('healthSlider').value = healthValue;
+        updateBar('health');
+    }
+    if (energyValue) {
+        document.getElementById('energySlider').value = energyValue;
+        updateBar('energy');
+    }
+    if (manaValue) {
+        document.getElementById('manaSlider').value = manaValue;
+        updateBar('mana');
+    }
+    
+    // Load gold
+    const savedGold = localStorage.getItem('gold');
+    if (savedGold) {
+        document.getElementById('goldAmount').textContent = savedGold;
+    }
+    
+    // Load inventory
+    const savedInventory = localStorage.getItem('inventory');
+    if (savedInventory) {
+        const inventory = JSON.parse(savedInventory);
+        const inventoryList = document.getElementById('inventory');
+        inventory.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+            <span onclick="showItemDescription('${item.name}', '${item.description}')" data-description="${item.description}">${item.name}</span>
+            <button onclick="this.parentElement.remove()">Remove</button>
+            `;
+            inventoryList.appendChild(li);
+        });
+    }
+    
+    // Load abilities
+    const savedAbilities = localStorage.getItem('abilities');
+    if (savedAbilities) {
+        const abilities = JSON.parse(savedAbilities);
+        const abilitiesList = document.getElementById('abilities');
+        abilities.forEach(ability => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+            <span onclick="showAbilityDescription('${ability.name}', '${ability.description}')" data-description="${ability.description}">${ability.name}</span>
+            <button onclick="this.parentElement.remove()">Remove</button>
+            `;
+            abilitiesList.appendChild(li);
+        });
+    }
+}
+
+// Modify existing functions to save data
+const originalAddItem = addItem;
+addItem = function() {
+    originalAddItem();
+    saveCharacterData();
+};
+
+const originalAddAbility = addAbility;
+addAbility = function() {
+    originalAddAbility();
+    saveCharacterData();
+};
+
+function changeStat(statName, amount) {
+    const statElement = document.getElementById(statName);
+    let currentValue = parseInt(statElement.textContent);
+    let newValue = currentValue + amount;
+    
+    if (newValue >= 0) {
+        statElement.textContent = newValue;
+        
+        // Update related bars
+        if (statName === 'vitality') {
+            updateHealthBar(newValue * 10);
+        } else if (statName === 'stamina') {
+            updateEnergyBar(newValue * 10);
+        } else if (statName === 'wisdom') {
+            updateManaBar(newValue * 10);
+        }
+        
+        saveCharacterData();
+    }
+}
+
+function updateBar(barType) {
+    const slider = document.getElementById(`${barType}Slider`);
+    const bar = document.getElementById(`${barType}Bar`);
+    const text = document.getElementById(`${barType}Text`);
+    const maxValue = slider.max;
+    
+    bar.style.width = `${(slider.value / maxValue) * 100}%`;
+    text.textContent = `${slider.value}/${maxValue}`;
+    
+    saveCharacterData();
+}
+
+function updateGold() {
+    const goldInput = document.getElementById('goldInput');
+    const goldAmount = document.getElementById('goldAmount');
+    
+    goldAmount.textContent = goldInput.value;
+    saveCharacterData();
+}
+
+// Load data when the page loads
+window.addEventListener('load', loadCharacterData);
     </script>
-    <script>
-    // Set a cookie
-    function setCookie(name, value, days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        const expires = `expires=${date.toUTCString()}`;
-        document.cookie = `${name}=${value}; ${expires}; path=/`;
-    }
-
-    // Get a cookie
-    function getCookie(name) {
-        const cookies = document.cookie.split('; ');
-        for (const cookie of cookies) {
-            const [key, value] = cookie.split('=');
-            if (key === name) return value;
-        }
-        return '';
-    }
-
-    // Use cookies to remember user input
-    function saveData() {
-        const name = document.getElementById('username').value;
-        setCookie('userName', name, 7); // Save for 7 days
-        loadData();
-    }
-
-    function loadData() {
-        const storedName = getCookie('userName');
-        if (storedName) {
-            document.getElementById('greeting').textContent = `Welcome back, ${storedName}!`;
-        }
-    }
-
-    // Call loadData on page load
-    window.onload = loadData;
-</script>
-
     </body>
     </html>
