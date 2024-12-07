@@ -406,5 +406,42 @@
     }
     };
     </script>
+    <script>
+    // Set a cookie
+    function setCookie(name, value, days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = `expires=${date.toUTCString()}`;
+        document.cookie = `${name}=${value}; ${expires}; path=/`;
+    }
+
+    // Get a cookie
+    function getCookie(name) {
+        const cookies = document.cookie.split('; ');
+        for (const cookie of cookies) {
+            const [key, value] = cookie.split('=');
+            if (key === name) return value;
+        }
+        return '';
+    }
+
+    // Use cookies to remember user input
+    function saveData() {
+        const name = document.getElementById('username').value;
+        setCookie('userName', name, 7); // Save for 7 days
+        loadData();
+    }
+
+    function loadData() {
+        const storedName = getCookie('userName');
+        if (storedName) {
+            document.getElementById('greeting').textContent = `Welcome back, ${storedName}!`;
+        }
+    }
+
+    // Call loadData on page load
+    window.onload = loadData;
+</script>
+
     </body>
     </html>
